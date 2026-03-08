@@ -1,20 +1,48 @@
+"use client"
+
 import * as React from "react"
 
 import { cn } from "@/lib/utils"
 
-function Table({
-  className,
-  ...props
-}) {
-  return (
-    <div data-slot="table-container" className="relative w-full overflow-x-auto">
-      <table
-        data-slot="table"
-        className={cn("w-full caption-bottom text-sm", className)}
-        {...props} />
-    </div>
-  );
-}
+const Table = React.forwardRef(
+  ({ className, noWrapper, divClassname, ...props }, ref) => {
+    if (noWrapper) {
+      return (
+        <table
+          ref={ref}
+          className={cn("w-full caption-bottom text-sm bg-background", className)}
+          {...props}
+        />
+      );
+    }
+
+    return (
+      <div className={cn("relative w-full overflow-auto", divClassname)}>
+        <table
+          ref={ref}
+          className={cn("w-full caption-bottom text-sm", className)}
+          {...props}
+        />
+      </div>
+    );
+  }
+);
+
+Table.displayName = "Table";
+
+// function Table({
+//   className,
+//   ...props
+// }) {
+//   return (
+//     <div data-slot="table-container" className="relative w-full overflow-x-auto">
+//       <table
+//         data-slot="table"
+//         className={cn("w-full caption-bottom text-sm", className)}
+//         {...props} />
+//     </div>
+//   );
+// }
 
 function TableHeader({
   className,
