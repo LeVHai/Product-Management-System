@@ -6,9 +6,9 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select"
-const SelectCategories = () => {
+const SelectCategories = ({onChange,...props}) => {
   return (
-    <Select>
+    <Select  onValueChange={(value) => onChange(value)} {...props}>
   <SelectTrigger className="w-[180px]">
     <SelectValue placeholder="Danh mục sản phẩm" />
   </SelectTrigger>

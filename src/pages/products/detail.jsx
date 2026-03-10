@@ -1,151 +1,117 @@
+import { useParams, useNavigate } from "react-router-dom";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CustomButton } from "@/components/ui/CustomButton";
+import { ArrowLeft } from "lucide-react";
+import { useEffect, useState } from "react";
+import api from "@/services/api";
 
-import { Card } from "@/components/ui/card";
-import {
-  Dialog,
-  DialogClose,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { Field, FieldLabel } from "@/components/ui/field";
-import { Input } from "@/components/ui/input";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import SelectCategories from "@/components/ui/select_categorie";
-import { Separator } from "@/components/ui/separator";
-import { Textarea } from "@/components/ui/textarea";
-import UploadFile from "@/components/ui/UploadFile";
-import { CircleAlert, EyeClosed, Info, Save, SaveIcon } from "lucide-react";
-import { forwardRef, useRef, useState } from "react";
-import { useNavigate } from "react-router";
-const ProductDetail = forwardRef(({ reload }, ref) => {
+const PRODUCT_STATUS = {
+  ACTIVE: "ACTIVE",
+  INACTIVE: "INACTIVE",
+};
+
+const ProductDetail = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+
+  const [product, setProduct] = useState(null);
+
+  useEffect(() => {
+    fetchProduct();
+  }, [id]);
+
+  const fetchProduct = async () => {
+    const res = await api.getProduct(id);
+    
+    setProduct(res.data);
+  };
+
+  if (!product) return <div className="p-6">Loading...</div>;
+
   return (
-    <Dialog>
-      <DialogContent className="max-h-[min(600px,80vh)] min-w-[800px] flex flex-col">
-        <DialogHeader>
-          <DialogTitle>Edit profile</DialogTitle>
-        </DialogHeader>
-        <ScrollArea className="flex-1 overflow-auto">
-          <ProductFormDetail />
-        </ScrollArea>
-        <DialogFooter>
-          <DialogClose asChild>
-            <CustomButton size="sm" variant="secondary">
-              Quay lại
-            </CustomButton>
-          </DialogClose>
-          <CustomButton size="sm">Lưu</CustomButton>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  );
-});
-export default ProductDetail;
-const ProductFormDetail = forwardRef(() => {
-  return (
-    <div className="flex gap-3 mt-3">
-      <Card className="flex-3/5">
-        <div className="">
-          <h3 className="text-balance text-xl font-normal text-foreground dark:text-foreground">
-            Thông tin chung
-          </h3>
-          <p className="text-pretty mt-1 text-sm text-muted-foreground dark:text-muted-foreground">
-            Nhập thông tin cơ bản để tạo mới sản phẩm trong hệ thống.
-          </p>
-          <div className="mt-8">
-            <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
-              <div className="col-span-full sm:col-span-3">
-                <Field className="gap-2">
-                  <FieldLabel htmlFor="first-name">
-                    Tên sản phẩm
-                    <span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <Input type="text" required placeholder="Tên sản phẩm" />
-                </Field>
-              </div>
-              <div className="col-span-full sm:col-span-3">
-                <Field className="gap-2">
-                  <FieldLabel htmlFor="last-name">
-                    Danh mục sản phẩm
-                    <span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <SelectCategories />
-                </Field>
-              </div>
-              <div className="col-span-full">
-                <Field className="gap-2">
-                  <FieldLabel htmlFor="email">
-                    Mô tả sản phẩm
-                    <span className="text-red-500">*</span>
-                  </FieldLabel>
-                  <Textarea
-                    id="workspace-description"
-                    name="workspace-description"
-                    rows={4}
-                  />
-                </Field>
-              </div>
-              <div className="col-span-full sm:col-span-3">
-                <Field className="gap-2">
-                  <FieldLabel htmlFor="address">Giá sản phẩm</FieldLabel>
-                  <Input type="text" placeholder="Giá sản phẩm" />
-                </Field>
-              </div>
-              <div className="col-span-full sm:col-span-3">
-                <Field className="gap-2">
-                  <FieldLabel htmlFor="city">Trạng thái</FieldLabel>
-                  <Select>
-                    <SelectTrigger className="w-[180px]">
-                      <SelectValue placeholder="Trạng thái" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectGroup>
-                        <SelectItem value="light">Kinh doanh</SelectItem>
-                        <SelectItem value="dark">Ngừng kinh doanh</SelectItem>
-                      </SelectGroup>
-                    </SelectContent>
-                  </Select>
-                </Field>
-              </div>
-            </div>
-          </div>
+    <div className="p-6 space-y-6">
+
+      {/* Header */}
+      <div className="flex items-center gap-3">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => navigate(-1)}
+        >
+          <ArrowLeft size={18} />
+        </Button>
+
+        <h1 className="text-xl font-semibold">
+          Chi tiết sản phẩm
+        </h1>
+      </div>
+
+      {/* Content */}
+      <div className="grid md:grid-cols-3 gap-6">
+
+        {/* Image */}
+        <div className="border rounded-lg p-4 flex items-center justify-center">
+          <img
+            src={product.image}
+            className="max-h-60 object-contain"
+          />
         </div>
-      </Card>
-      <div className="flex-2/5">
-        <Card>
-          <div className="col-span-full sm:col-span-3">
-            <div className="font-medium mb-2">Ảnh sản phẩm</div>
 
-            <div className="flex gap-2 h-40">
-              <div className="flex-1">
-                <UploadFile className="h-full" />
-              </div>
-              <div className="flex-1 bg-amber-400">3434</div>
-            </div>
-          </div>
+        {/* Info */}
+        <div className="md:col-span-2 space-y-4">
 
-          <div className="flex items-center gap-3 text-sm">
-            <Info className="h-7 w-7 text-muted-foreground mt-0.5" />
-            <p className="text-muted-foreground">
-              Bạn cần ít nhất{" "}
-              <span className="font-medium text-foreground">1 hình ảnh</span>.
-              Hãy chú ý đến chất lượng của những bức ảnh bạn thêm vào.
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Tên sản phẩm
+            </p>
+            <p className="text-lg font-medium">
+              {product.name}
             </p>
           </div>
-        </Card>
+
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Danh mục
+            </p>
+            <p>{product.category}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Giá
+            </p>
+            <p>{product.price} đ</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Số lượng
+            </p>
+            <p>{product.quantity}</p>
+          </div>
+
+          <div>
+            <p className="text-sm text-muted-foreground">
+              Trạng thái
+            </p>
+
+            <Badge
+              className={
+                product.status === PRODUCT_STATUS.ACTIVE
+                  ? "border-emerald-600/40 bg-emerald-600/10 text-emerald-500"
+                  : "border-red-600/40 bg-red-600/10 text-red-500"
+              }
+            >
+              {product.status === PRODUCT_STATUS.ACTIVE
+                ? "Kinh doanh"
+                : "Ngừng kinh doanh"}
+            </Badge>
+          </div>
+
+        </div>
       </div>
     </div>
   );
-});
+};
+
+export default ProductDetail;

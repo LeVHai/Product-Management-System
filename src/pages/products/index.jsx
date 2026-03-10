@@ -4,8 +4,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import HeaderApp from "@/components/ui/header_app";
 import { Input } from "@/components/ui/input";
-import React from "react";
-import ProductDetail from "./detail";
+import React, { use, useEffect, useRef, useState } from "react";
+import ProductDetail from "./productInfo";
 import { Eye, Handbag, Pencil, Sprout, Trash2 } from "lucide-react";
 import PaginationPage from "@/components/pagination";
 import { CustomButton } from "@/components/ui/CustomButton";
@@ -15,18 +15,100 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import api from "@/services/api";
+import PaginationRender from "@/components/pagination8";
+import { useNavigate } from "react-router";
+import { PRODUCT_STATUS } from "@/types";
+import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import { Helmet } from "react-helmet-async";
 
 const Products = () => {
+  const navigate = useNavigate();
+
+  const [products, setProducts] = useState([]);
+
+  const [lazyParams, setLazyParams] = useState({
+    page: 1,
+    limit: 20,
+    search: "",
+  });
+  const [pagination, setPagination] = useState({
+    totalPage: 0,
+    total: 0,
+  });
+
+  const [loading, setLoading] = useState(false);
+
+  const [openDialogConfirm, setOpenDialogConfirm] = useState(false);
+
+  const refDetail = useRef();
+
+  useEffect(() => {
+    const loadData = async (lazy) => {
+      const res = await api.product_list(lazy);
+      setProducts(res.data);
+      setPagination(res.pagination);
+    };
+    loadData(lazyParams);
+  }, [lazyParams]);
+
+  const onView = (id) => {
+    navigate(`/product/${id}`);
+  };
+  const onCreate = () => {
+    refDetail.current.create();
+  };
+  const onEdit = (rowData) => {
+    refDetail.current.update(rowData);
+  };
+  const onDelete = async (id) => {
+    try {
+      const res = await api.delete_product(id);
+      if (res.success) {
+        console.log(res);
+        toast.success("Xóa sản phẩm thành công");
+        onReload();
+      }
+    } catch (error) {
+    } finally {
+      setOpenDialogConfirm(false);
+      setLoading(false);
+    }
+  };
+  const onReload = async () => {
+    const res = await api.product_list(lazyParams);
+    setProducts(res.data);
+    setPagination(res.pagination);
+  };
+
   const columns = [
     {
       title: "STT",
       key: "index",
-      render: (_, __, index) => index + 1,
+      align: "center",
+      width: 50,
+      render: (_, __, index) => (
+        <div>{(lazyParams.page - 1) * lazyParams.limit + index + 1}</div>
+      ),
     },
     {
       title: "Hình ảnh",
-      dataIndex: "image",
       key: "image",
+      render: (_, record) => (
+        <img src={record.image} className="w-12 h-12 object-cover" />
+      ),
     },
     {
       title: "Tên sản phẩm",
@@ -44,25 +126,47 @@ const Products = () => {
       key: "price",
     },
     {
-      title: "Tồn kho",
-      dataIndex: "stockQuantity",
-      key: "stockQuantity",
+      title: "Số lượng",
+      dataIndex: "quantity",
+      key: "quantity",
     },
     {
       title: "Trạng thái",
-      dataIndex: "status",
       key: "status",
+      align: "center",
+      render: (_, record) => {
+        return (
+          <Badge
+            className={
+              record.status === PRODUCT_STATUS.ACTIVE
+                ? "border-emerald-600/40 bg-emerald-600/10 text-emerald-500"
+                : "border-red-600/40 bg-red-600/10 text-red-500"
+            }
+          >
+            {record.status === PRODUCT_STATUS.ACTIVE
+              ? "Kinh doanh"
+              : "Ngừng kinh doanh"}
+          </Badge>
+        );
+      },
     },
     {
       title: "",
       key: "action",
+      align: "center",
       fixed: "right",
-      render: (_, record) => (
-        <div className="flex justify-end gap-4">
+      render: (val, record) => (
+        <div className="flex justify-center gap-4">
           <TooltipProvider>
             <Tooltip>
               <TooltipTrigger asChild>
-                <CustomButton variant="link" size="xs">
+                <CustomButton
+                  onClick={() => {
+                    onView(record._id);
+                  }}
+                  variant="link"
+                  size="xs"
+                >
                   <Eye className="w-4 h-4" />
                 </CustomButton>
               </TooltipTrigger>
@@ -72,7 +176,13 @@ const Products = () => {
             </Tooltip>
             <Tooltip>
               <TooltipTrigger asChild>
-                <CustomButton variant="link" size="xs">
+                <CustomButton
+                  onClick={() => {
+                    onEdit(record);
+                  }}
+                  variant="link"
+                  size="xs"
+                >
                   <Pencil className="w-4 h-4" />
                 </CustomButton>
               </TooltipTrigger>
@@ -80,181 +190,99 @@ const Products = () => {
                 <p>Sửa</p>
               </TooltipContent>
             </Tooltip>
+            <AlertDialog
+              open={openDialogConfirm}
+              onOpenChange={setOpenDialogConfirm}
+            >
+              <AlertDialogTrigger asChild>
+                <Trash2 className="w-4 h-4 text-red-600" />
+              </AlertDialogTrigger>
+              <AlertDialogContent>
+                <AlertDialogHeader>
+                  <AlertDialogTitle>Xóa sản phẩm</AlertDialogTitle>
+                  <AlertDialogDescription>
+                    Không thể hoàn tác hành động này. Thao tác này sẽ xóa vĩnh
+                    viễn mục đó khỏi tài khoản của bạn.
+                  </AlertDialogDescription>
+                </AlertDialogHeader>
+                <AlertDialogFooter>
+                  <AlertDialogCancel>Đóng</AlertDialogCancel>
 
-            <Tooltip>
+                  <CustomButton
+                    size="sm"
+                    variant="destructive"
+                    onClick={() => onDelete(record._id)}
+                  >
+                    Xóa
+                  </CustomButton>
+                </AlertDialogFooter>
+              </AlertDialogContent>
+            </AlertDialog>
+
+            {/* <Tooltip>
               <TooltipTrigger asChild>
-                <CustomButton variant="link" size="xs">
-                  <Trash2 className="w-4 h-4" />
+                <CustomButton
+                  variant="link"
+                  size="xs"
+                  onClick={() => onDelete()}
+                >
+                  <Trash2 className="w-4 h-4 text-red-600" />
                 </CustomButton>
               </TooltipTrigger>
               <TooltipContent>
                 <p>Xóa</p>
               </TooltipContent>
-            </Tooltip>
+            </Tooltip> */}
           </TooltipProvider>
         </div>
       ),
     },
   ];
-  const products = [
-    {
-      _id: "65f1a001a1b2c3d4e5f60001",
-      name: "Basic White T-Shirt",
-      description: "Áo thun trắng cotton 100%",
-      category: "T-Shirt",
-      price: 199000,
-      stockQuantity: 120,
-      image: "https://picsum.photos/200?1",
-      status: "active",
-      createdAt: new Date("2025-01-01T08:00:00Z"),
-      updatedAt: new Date("2025-01-05T10:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60002",
-      name: "Black Hoodie Premium",
-      description: "Hoodie nỉ cao cấp, form rộng",
-      category: "Hoodie",
-      price: 499000,
-      stockQuantity: 45,
-      image: "https://picsum.photos/200?2",
-      status: "active",
-      createdAt: new Date("2025-01-03T09:00:00Z"),
-      updatedAt: new Date("2025-01-06T12:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60003",
-      name: "Funny Cat Mug",
-      description: "Ly sứ in hình mèo dễ thương",
-      category: "Mug",
-      price: 129000,
-      stockQuantity: 200,
-      image: "https://picsum.photos/200?3",
-      status: "active",
-      createdAt: new Date("2025-01-04T07:30:00Z"),
-      updatedAt: new Date("2025-01-04T07:30:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60004",
-      name: "iPhone 15 Clear Case",
-      description: "Ốp lưng trong suốt chống sốc",
-      category: "Phone Case",
-      price: 99000,
-      stockQuantity: 15,
-      image: "https://picsum.photos/200?4",
-      status: "inactive",
-      createdAt: new Date("2025-01-02T11:00:00Z"),
-      updatedAt: new Date("2025-01-07T14:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60005",
-      name: "Oversize Graphic T-Shirt",
-      description: "Áo thun form rộng in graphic",
-      category: "T-Shirt",
-      price: 249000,
-      stockQuantity: 78,
-      image: "https://picsum.photos/200?5",
-      status: "active",
-      createdAt: new Date("2025-01-08T10:00:00Z"),
-      updatedAt: new Date("2025-01-08T10:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60005",
-      name: "Oversize Graphic T-Shirt",
-      description: "Áo thun form rộng in graphic",
-      category: "T-Shirt",
-      price: 249000,
-      stockQuantity: 78,
-      image: "https://picsum.photos/200?5",
-      status: "active",
-      createdAt: new Date("2025-01-08T10:00:00Z"),
-      updatedAt: new Date("2025-01-08T10:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60005",
-      name: "Oversize Graphic T-Shirt",
-      description: "Áo thun form rộng in graphic",
-      category: "T-Shirt",
-      price: 249000,
-      stockQuantity: 78,
-      image: "https://picsum.photos/200?5",
-      status: "active",
-      createdAt: new Date("2025-01-08T10:00:00Z"),
-      updatedAt: new Date("2025-01-08T10:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60005",
-      name: "Oversize Graphic T-Shirt",
-      description: "Áo thun form rộng in graphic",
-      category: "T-Shirt",
-      price: 249000,
-      stockQuantity: 78,
-      image: "https://picsum.photos/200?5",
-      status: "active",
-      createdAt: new Date("2025-01-08T10:00:00Z"),
-      updatedAt: new Date("2025-01-08T10:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60005",
-      name: "Oversize Graphic T-Shirt",
-      description: "Áo thun form rộng in graphic",
-      category: "T-Shirt",
-      price: 249000,
-      stockQuantity: 78,
-      image: "https://picsum.photos/200?5",
-      status: "active",
-      createdAt: new Date("2025-01-08T10:00:00Z"),
-      updatedAt: new Date("2025-01-08T10:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60005",
-      name: "Oversize Graphic T-Shirt",
-      description: "Áo thun form rộng in graphic",
-      category: "T-Shirt",
-      price: 249000,
-      stockQuantity: 78,
-      image: "https://picsum.photos/200?5",
-      status: "active",
-      createdAt: new Date("2025-01-08T10:00:00Z"),
-      updatedAt: new Date("2025-01-08T10:00:00Z"),
-    },
-    {
-      _id: "65f1a001a1b2c3d4e5f60005",
-      name: "Oversize Graphic T-Shirt",
-      description: "Áo thun form rộng in graphic",
-      category: "T-Shirt",
-      price: 249000,
-      stockQuantity: 78,
-      image: "https://picsum.photos/200?5",
-      status: "active",
-      createdAt: new Date("2025-01-08T10:00:00Z"),
-      updatedAt: new Date("2025-01-08T10:00:00Z"),
-    },
-  ];
-  return (
-   <>
-    <div className="flex flex-col h-full">
-      <HeaderApp
-        icon={<Handbag />}
-        title={"Danh sách sản phẩm"}
-        rightTop={
-          <div>
-            <CustomButton size="sm">Thêm sản phẩm</CustomButton>
-          </div>
-        }
-        rightBottom={
-          <div>
-            <Input />
-          </div>
-        }
-      />
+  const onChangePage = (value, key) => {
+    setLazyParams((prev) => ({
+      ...prev,
+      [key]: value,
+      ...(key === "limit" && { page: 1 }),
+    }));
+  };
 
-      <div className="flex-1 overflow-auto">
-        <BaseTable columns={columns} dataSource={products} />
+  return (
+    <>
+      <Helmet>
+        <title> Product</title>
+      </Helmet>
+      <div className="flex flex-col h-full">
+        <HeaderApp
+          icon={<Handbag />}
+          title={"Danh sách sản phẩm"}
+          rightTop={
+            <div>
+              <CustomButton size="sm" onClick={() => onCreate()}>
+                Thêm sản phẩm
+              </CustomButton>
+            </div>
+          }
+          rightBottom={
+            <div>
+              <Input />
+            </div>
+          }
+        />
+
+        <div className="flex-1 overflow-auto">
+          <BaseTable columns={columns} dataSource={products} />
+        </div>
+        <div className="mt-2">
+          <PaginationRender
+            currentPage={lazyParams.page}
+            totalPages={pagination.totalPage}
+            paginationItemsToDisplay={10}
+            onChangePage={onChangePage}
+          />
+        </div>
       </div>
-      <PaginationPage />
-    </div>
-    <ProductDetail/>
-   </>
+      <ProductDetail ref={refDetail} reload={onReload} />
+    </>
   );
 };
 

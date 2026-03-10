@@ -1,29 +1,154 @@
-import React from "react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import image from "@/assets/image.png";
+import bgr from "@/assets/image/bgr.jpg";
+import { CustomButton } from "@/components/ui/CustomButton";
+import { useState } from "react";
+import { cloneDeep } from "lodash";
+import api from "@/services/api";
+import { useNavigate } from "react-router";
+import { useUserActions } from "@/store/userStore";
 
 const Login = () => {
+  const defaultValue = {
+    email: "",
+    password: "",
+  };
+
+  const [data, setData] = useState(defaultValue);
+  const [error, setError] = useState(defaultValue);
+  const navigate = useNavigate();
+  const onChangeData = (prop, value) => {
+    let _data = cloneDeep(data);
+
+    _data[prop] = value;
+    validateData([prop], _data);
+    setData(_data);
+  };
+
+  const validateData = (prop, _data) => {
+    let _error = cloneDeep(error);
+    let requiredFields = prop.length > 0 ? prop : Object.keys(_data);
+    let _prop = requiredFields;
+    for (const field of _prop) {
+      switch (field) {
+        case "email":
+          _error[field] = "";
+          if (!_data[field]) {
+            _error[field] = "Tài khoản không được bỏ trống!";
+          }
+          break;
+        case "password":
+          _error[field] = "";
+          if (!_data[field]) {
+            _error[field] = "Mật khẩu không được bỏ trống";
+          }
+          break;
+        default:
+          break;
+      }
+    }
+
+    setError(_error);
+    let count = 0;
+    for (const key in _error) {
+      if (_error[key]) {
+        count++;
+      }
+    }
+    return count;
+  };
+  const renderError = (field) => {
+    if (error[field]) {
+      return (
+        <span className="absolute left-0  top-full mt-1 text-red-500 text-xs">
+          {error[field]}
+        </span>
+      );
+    }
+  };
+  const onChangeEmail = (e) => {
+    onChangeData("email", e.target.value);
+  };
+  const onChangePassword = (e) => {
+    onChangeData("password", e.target.value);
+  };
+
+  const onSubmit = async () => {
+    let validate = validateData([], data);
+    if (validate) return;
+    try {
+      const res = await api.login(data);
+      if (res.success) {
+        navigate("/", { replace: true });
+      }
+    } catch (err) {
+      const errors = err.data?.error;
+      if (errors) {
+        Object.keys(errors).forEach((key) => {
+          setError((prev) => ({
+            ...prev,
+            [key]: errors[key].msg,
+          }));
+        });
+      }
+    }
+  };
   return (
-    <div className="flex">
-      <div>
-        <svg
-          width="120"
-          height="40"
-          viewBox="0 0 102 32"
-          fill="none"
-          xmlns="http://www.w3.org/2000/svg"
-          className="lg:hidden"
-          style={{ cursor: "pointer" }}
-        >
-          <path
-            d="M0.895662 13.3213C-0.948138 10.1277 0.146053 6.04415 3.33961 4.20035C6.53316 2.35655 10.6168 3.45075 12.4606 6.64435L21.061 21.5405C22.9048 24.7341 21.8106 28.8177 18.617 30.6615C15.4235 32.5053 11.3399 31.4111 9.49606 28.2175L0.895662 13.3213Z"
-            fill="currentColor"
-            className="text-primary"
-          />
-          <path
-            d="M31.4344 6.05133C29.876 2.70922 25.9033 1.26328 22.5612 2.82173C19.2191 4.38018 17.7731 8.35287 19.3316 11.695C20.89 15.0371 24.8627 16.483 28.2048 14.9246C31.5469 13.3661 32.9929 9.39343 31.4344 6.05133Z"
-            fill="currentColor"
-            className="text-primary"
-          />
-        </svg>
+    <div
+      className="flex items-center justify-center min-h-screen bg-cover bg-center p-4"
+      style={{
+        backgroundImage: `url(${bgr})`,
+      }}
+    >
+      <div
+        className="flex w-full max-w-4xl h-[80vh]  rounded-2xl overflow-hidden
+        bg-background"
+      >
+        {/* <div
+        className="flex w-full max-w-4xl rounded-2xl overflow-hidden
+        bg-white/10 backdrop-blur-md border border-white/20 shadow-2xl"
+      > */}
+        <div className="flex w-full md:w-1/2 p-6 md:p-10">
+          <div className="w-full max-w-sm">
+            <div className="text-center mb-6">
+              <h3 className="text-xl font-semibold ">Welcome Back</h3>
+              <p className="text-sm ">
+                Nhập thông tin đăng nhập của bạn để truy cập vào tài khoản
+              </p>
+            </div>
+            <div className="space-y-6">
+              <div className="relative">
+                <Label className="mb-2">Email</Label>
+                <Input
+                  type="email"
+                  placeholder="email@example.com"
+                  onChange={(e) => onChangeEmail(e)}
+                />
+                {renderError("email")}
+              </div>
+              <div className="relative">
+                <Label className="mb-2">Mật khẩu</Label>
+                <Input
+                  type="password"
+                  placeholder="********"
+                  onChange={(e) => onChangePassword(e)}
+                />
+                {renderError("password")}
+              </div>
+              <CustomButton
+                size="sm"
+                className="w-full mt-4"
+                onClick={() => onSubmit()}
+              >
+                Đăng nhập
+              </CustomButton>
+            </div>
+          </div>
+        </div>
+        <div className="hidden md:flex md:w-1/2 items-center justify-center p-6">
+          <img src={image} className="object-contain" />
+        </div>
       </div>
     </div>
   );

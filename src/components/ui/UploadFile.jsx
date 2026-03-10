@@ -1,24 +1,38 @@
-import { ImageUp, X } from "lucide-react"
-import { useRef, useState } from "react"
-import { Button } from "@/components/ui/button"
+import { ImageUp, X } from "lucide-react";
+import { useRef, useState } from "react";
+// import { Button } from "@/components/ui/button"
 
-const UploadFile = ({className}) => {
-  const [files, setFiles] = useState([])
-  const inputRef = useRef(null)
+const UploadFile = ({ className, onChange }) => {
+  // const [files, setFiles] = useState([])
+  const inputRef = useRef(null);
+
+  // const handleFileChange = (e) => {
+  //   if (e.target.files) {
+  //     setFiles(Array.from(e.target.files))
+  //     onChange(Array.from(e.target.files))
+  //   }
+  // }
 
   const handleFileChange = (e) => {
     if (e.target.files) {
-      setFiles(Array.from(e.target.files))
+      const selectedFiles = e.target.files[0];
+      if (onChange) {
+        const filesWithUrl = {
+          file :selectedFiles,
+          url: URL.createObjectURL(selectedFiles),
+        }
+        onChange(filesWithUrl);
+      }
     }
-  }
+  };
 
-  const removeFile = (index) => {
-    setFiles(files.filter((_, i) => i !== index))
-  }
+  // const removeFile = (index) => {
+  //   setFiles(files.filter((_, i) => i !== index))
+  // }
 
   const handleClick = () => {
-    inputRef.current?.click()
-  }
+    inputRef.current?.click();
+  };
 
   return (
     <div className="w-full h-full  space-y-4">
@@ -31,7 +45,7 @@ const UploadFile = ({className}) => {
       >
         <ImageUp className="h-8 w-8 text-muted-foreground mb-3" />
         <p className="text-sm text-muted-foreground">
-         Kéo thả ảnh hoặc {" "}
+          Kéo thả ảnh hoặc{" "}
           <span className="text-primary font-medium">chọn ảnh.</span>
         </p>
       </div>
@@ -40,13 +54,13 @@ const UploadFile = ({className}) => {
       <input
         ref={inputRef}
         type="file"
-        multiple
+        accept="image/*"
         onChange={handleFileChange}
         className="hidden"
       />
 
       {/* File List */}
-      {files.length > 0 && (
+      {/* {files.length > 0 && (
         <div className="space-y-2">
           {files.map((file, index) => (
             <div
@@ -65,9 +79,9 @@ const UploadFile = ({className}) => {
             </div>
           ))}
         </div>
-      )}
+      )} */}
     </div>
-  )
-}
+  );
+};
 
-export default UploadFile
+export default UploadFile;

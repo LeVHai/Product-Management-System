@@ -48,7 +48,7 @@
 :root {
     --radius: 0.625rem;
     --background: white;
-    --foreground: oklch(0.145 0 0);
+    --foreground: oklch(0.145 0 0); 
     --card: oklch(1 0 0);
     --card-foreground: oklch(0.145 0 0);
     --popover: oklch(1 0 0);
@@ -158,14 +158,18 @@ html, body, #root {
   overflow: visible;
 }
 
-tbody {
+table {
+    overflow-x: auto;
+    white-space: nowrap;
+}
+/* tbody {
     display: block;
-    /* height: 100px; */
+   
     overflow: auto;
 }
 thead, tbody tr {
     display: table;
     width: 100%;
     table-layout: fixed;
-}
+} */
 
