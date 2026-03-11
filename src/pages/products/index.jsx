@@ -1,13 +1,9 @@
-import { Modal } from "@/components/ui/add_product";
 import BaseTable from "@/components/ui/base_table";
-import { Button } from "@/components/ui/button";
-import { Card } from "@/components/ui/card";
 import HeaderApp from "@/components/ui/header_app";
 import { Input } from "@/components/ui/input";
 import React, { use, useEffect, useRef, useState } from "react";
 import ProductDetail from "./productInfo";
-import { Eye, Handbag, Pencil, Sprout, Trash2 } from "lucide-react";
-import PaginationPage from "@/components/pagination";
+import { Eye, Handbag, Pencil, PlusCircle, Trash2 } from "lucide-react";
 import { CustomButton } from "@/components/ui/CustomButton";
 import {
   Tooltip,
@@ -29,12 +25,15 @@ import {
 import api from "@/services/api";
 import PaginationRender from "@/components/pagination8";
 import { useNavigate } from "react-router";
-import { PRODUCT_STATUS } from "@/types";
+import { CATEGORIES, PRODUCT_STATUS } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { toast } from "sonner";
 import { Helmet } from "react-helmet-async";
+import ConfirmDeleteDialog from "@/components/ConfirmDeleteDialog";
+
 
 const Products = () => {
+
   const navigate = useNavigate();
 
   const [products, setProducts] = useState([]);
@@ -44,6 +43,7 @@ const Products = () => {
     limit: 20,
     search: "",
   });
+
   const [pagination, setPagination] = useState({
     totalPage: 0,
     total: 0,
@@ -54,30 +54,43 @@ const Products = () => {
   const [openDialogConfirm, setOpenDialogConfirm] = useState(false);
 
   const refDetail = useRef();
+  const refConfirmDelete = useRef();
 
-  useEffect(() => {
-    const loadData = async (lazy) => {
+  const loadData = async (lazy) => {
+    setLoading(true);
+    try {
       const res = await api.product_list(lazy);
       setProducts(res.data);
       setPagination(res.pagination);
-    };
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     loadData(lazyParams);
   }, [lazyParams]);
 
   const onView = (id) => {
     navigate(`/product/${id}`);
   };
+
   const onCreate = () => {
     refDetail.current.create();
   };
+
   const onEdit = (rowData) => {
     refDetail.current.update(rowData);
   };
+
   const onDelete = async (id) => {
+    setLoading(true)
     try {
       const res = await api.delete_product(id);
+      console.log(res);
       if (res.success) {
-        console.log(res);
         toast.success("Xóa sản phẩm thành công");
         onReload();
       }
@@ -87,12 +100,11 @@ const Products = () => {
       setLoading(false);
     }
   };
+  
   const onReload = async () => {
-    const res = await api.product_list(lazyParams);
-    setProducts(res.data);
-    setPagination(res.pagination);
+    loadData(lazyParams);
   };
-
+  /*columns table*/
   const columns = [
     {
       title: "STT",
@@ -117,8 +129,9 @@ const Products = () => {
     },
     {
       title: "Danh mục",
-      dataIndex: "category",
+      
       key: "category",
+      render:(_,record)=> <span>{CATEGORIES[record?.category]}</span>
     },
     {
       title: "Giá",
@@ -190,54 +203,28 @@ const Products = () => {
                 <p>Sửa</p>
               </TooltipContent>
             </Tooltip>
-            <AlertDialog
-              open={openDialogConfirm}
-              onOpenChange={setOpenDialogConfirm}
-            >
-              <AlertDialogTrigger asChild>
-                <Trash2 className="w-4 h-4 text-red-600" />
-              </AlertDialogTrigger>
-              <AlertDialogContent>
-                <AlertDialogHeader>
-                  <AlertDialogTitle>Xóa sản phẩm</AlertDialogTitle>
-                  <AlertDialogDescription>
-                    Không thể hoàn tác hành động này. Thao tác này sẽ xóa vĩnh
-                    viễn mục đó khỏi tài khoản của bạn.
-                  </AlertDialogDescription>
-                </AlertDialogHeader>
-                <AlertDialogFooter>
-                  <AlertDialogCancel>Đóng</AlertDialogCancel>
-
-                  <CustomButton
-                    size="sm"
-                    variant="destructive"
-                    onClick={() => onDelete(record._id)}
-                  >
-                    Xóa
-                  </CustomButton>
-                </AlertDialogFooter>
-              </AlertDialogContent>
-            </AlertDialog>
-
-            {/* <Tooltip>
+            {/* Delete */}
+            <Tooltip>
               <TooltipTrigger asChild>
                 <CustomButton
+                  onClick={() => refConfirmDelete.current.delete(record._id)}
                   variant="link"
                   size="xs"
-                  onClick={() => onDelete()}
                 >
-                  <Trash2 className="w-4 h-4 text-red-600" />
+                   <Trash2 className="w-4 h-4 text-red-600" />
                 </CustomButton>
               </TooltipTrigger>
               <TooltipContent>
-                <p>Xóa</p>
+                <p>Xoá</p>
               </TooltipContent>
-            </Tooltip> */}
+            </Tooltip>
+           
           </TooltipProvider>
         </div>
       ),
     },
   ];
+  /** */
   const onChangePage = (value, key) => {
     setLazyParams((prev) => ({
       ...prev,
@@ -253,12 +240,12 @@ const Products = () => {
       </Helmet>
       <div className="flex flex-col h-full">
         <HeaderApp
-          icon={<Handbag />}
+          icon={<Handbag className="text-white size-7" />}
           title={"Danh sách sản phẩm"}
           rightTop={
             <div>
               <CustomButton size="sm" onClick={() => onCreate()}>
-                Thêm sản phẩm
+               <PlusCircle className="size-5 mr-2"/> Thêm sản phẩm
               </CustomButton>
             </div>
           }
@@ -282,6 +269,7 @@ const Products = () => {
         </div>
       </div>
       <ProductDetail ref={refDetail} reload={onReload} />
+      <ConfirmDeleteDialog ref={refConfirmDelete} onDelete={onDelete}/>
     </>
   );
 };

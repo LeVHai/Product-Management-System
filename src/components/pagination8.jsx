@@ -30,12 +30,11 @@ export default function PaginationRender({
 
   return (
     <div className="flex items-center w-full justify-between gap-3">
-      {/* Page number information */}
       <p
         aria-live="polite"
         className="text-muted-foreground flex-1 text-sm whitespace-nowrap"
       >
-        Page <span className="text-foreground">{currentPage}</span> of{" "}
+        Trang <span className="text-foreground">{currentPage}</span> /{" "}
         <span className="text-foreground">{totalPages}</span>
       </p>
 
@@ -118,10 +117,10 @@ export default function PaginationRender({
             <SelectValue placeholder="Select number of results" />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="10">10 / page</SelectItem>
-            <SelectItem value="20">20 / page</SelectItem>
-            <SelectItem value="50">50 / page</SelectItem>
-            <SelectItem value="100">100 / page</SelectItem>
+            <SelectItem value="10">10 / trang</SelectItem>
+            <SelectItem value="20">20 / trang</SelectItem>
+            <SelectItem value="50">50 / trang</SelectItem>
+            <SelectItem value="100">100 / trang</SelectItem>
           </SelectContent>
         </Select>
       </div>

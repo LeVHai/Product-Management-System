@@ -13,3 +13,10 @@ export const PRODUCT_STATUS = {
   INACTIVE: "inactive",
   ACTIVE: "active",
 };
+export const CATEGORIES = {
+  "1": "Quần",
+  "2": "Áo",
+  "3": "Váy",
+  "4": "Phụ kiện",
+  "5": "Giày"
+};

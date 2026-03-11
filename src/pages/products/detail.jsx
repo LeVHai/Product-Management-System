@@ -4,10 +4,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useEffect, useState } from "react";
 import api from "@/services/api";
+import { CATEGORIES } from "@/types";
 
 const PRODUCT_STATUS = {
-  ACTIVE: "ACTIVE",
-  INACTIVE: "INACTIVE",
+  ACTIVE: "active",
+  INACTIVE: "inactive",
 };
 
 const ProductDetail = () => {
@@ -27,6 +28,7 @@ const ProductDetail = () => {
   };
 
   if (!product) return <div className="p-6">Loading...</div>;
+console.log(product);
 
   return (
     <div className="p-6 space-y-6">
@@ -73,7 +75,7 @@ const ProductDetail = () => {
             <p className="text-sm text-muted-foreground">
               Danh mục
             </p>
-            <p>{product.category}</p>
+            <p>{CATEGORIES[product.category]}</p>
           </div>
 
           <div>

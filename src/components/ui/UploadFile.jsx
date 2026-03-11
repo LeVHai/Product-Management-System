@@ -2,7 +2,7 @@ import { ImageUp, X } from "lucide-react";
 import { useRef, useState } from "react";
 // import { Button } from "@/components/ui/button"
 
-const UploadFile = ({ className, onChange }) => {
+const UploadFile = ({ className, onChange,...props }) => {
   // const [files, setFiles] = useState([])
   const inputRef = useRef(null);
 
@@ -52,6 +52,7 @@ const UploadFile = ({ className, onChange }) => {
 
       {/* Hidden Input */}
       <input
+      {...props}
         ref={inputRef}
         type="file"
         accept="image/*"
